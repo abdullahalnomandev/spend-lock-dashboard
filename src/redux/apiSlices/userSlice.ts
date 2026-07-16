@@ -183,6 +183,54 @@ const userSlice = api.injectEndpoints({
         method: "GET",
       }),
     }),
+    getAdminUsers: builder.query<any, { page?: number; limit?: number; role?: string; searchTerm?: string } | void>({
+      query: (params) => {
+        const queryParams: Record<string, any> = {};
+        if (params) {
+          if (params.page !== undefined) queryParams.page = params.page;
+          if (params.limit !== undefined) queryParams.limit = params.limit;
+          if (params.role && params.role !== 'all') queryParams.role = params.role;
+          if (params.searchTerm) queryParams.searchTerm = params.searchTerm;
+        }
+        return {
+          url: "/user/admin-users",
+          params: queryParams,
+          method: "GET",
+        };
+      },
+      providesTags: [TagTypes.user],
+    }),
+    deleteUser: builder.mutation<{ success: boolean; message: string }, string>({
+      query: (id) => ({
+        url: `/user/${id}`,
+        method: "DELETE",
+      }),
+      invalidatesTags: [TagTypes.user],
+    }),
+    createUser: builder.mutation<any, any>({
+      query: (data) => ({
+        url: "/user",
+        method: "POST",
+        body: data,
+      }),
+      invalidatesTags: [TagTypes.user],
+    }),
   }),
 });
-export const { useGetUsersQuery, useChangeStatusUserMutation, useGetHostsQuery, useGetStatisticsQuery, useGetUserStatisticsQuery, useUpdateUserMutation, useChangePasswordMutation, useUpdateSingleUserMutation, useSendPushNotificationMutation, useUpdatePendingUserProfileMutation, useGetALlPartnerUsersQuery, useGetAdminDashboardOverviewQuery } = userSlice;
+export const {
+  useGetUsersQuery,
+  useChangeStatusUserMutation,
+  useGetHostsQuery,
+  useGetStatisticsQuery,
+  useGetUserStatisticsQuery,
+  useUpdateUserMutation,
+  useChangePasswordMutation,
+  useUpdateSingleUserMutation,
+  useSendPushNotificationMutation,
+  useUpdatePendingUserProfileMutation,
+  useGetALlPartnerUsersQuery,
+  useGetAdminDashboardOverviewQuery,
+  useGetAdminUsersQuery,
+  useDeleteUserMutation,
+  useCreateUserMutation,
+} = userSlice;

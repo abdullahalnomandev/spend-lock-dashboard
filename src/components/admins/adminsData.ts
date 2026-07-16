@@ -1,15 +1,6 @@
-export type AdminPermission =
-  | 'dashboard'
-  | 'users'
-  | 'revenue'
-  | 'coin_packages'
-  | 'broadcast'
-  | 'support'
-  | 'notifications'
-  | 'admins'
-  | 'settings'
+export type AdminPermission = string
 
-export type AdminRole = 'super_admin' | 'manager' | 'support' | 'custom'
+export type AdminRole = 'super_admin' | 'admin'
 
 export type AdminStatus = 'active' | 'suspended'
 
@@ -20,68 +11,20 @@ export type AdminAccount = {
   phone?: string
   avatarUrl?: string
   role: AdminRole
-  permissions: AdminPermission[]
+  permissions?: AdminPermission[]
   status: AdminStatus
   createdAt: string
   lastActiveAt?: string
 }
 
-export const permissionLabels: Record<AdminPermission, string> = {
-  dashboard: 'Dashboard',
-  users: 'Users',
-  revenue: 'Revenue',
-  coin_packages: 'Coin packages',
-  broadcast: 'Broadcast',
-  support: 'Support',
-  notifications: 'Notifications',
-  admins: 'Admin management',
-  settings: 'Settings',
-}
-
-export const permissionDescriptions: Record<AdminPermission, string> = {
-  dashboard: 'View the home dashboard, revenue trend, and open tickets',
-  users: 'Manage customer accounts — edit profiles, restrict, ban, force-unlock',
-  revenue: 'View revenue reports and coin purchase breakdowns',
-  coin_packages: 'Create, edit, pause, and price coin packages',
-  broadcast: 'Send announcements and push messages to users',
-  support: 'View and respond to customer support tickets',
-  notifications: 'View and manage the notifications feed',
-  admins: 'Create, edit, and remove admin accounts',
-  settings: 'Edit profile, FAQ, and platform content pages',
-}
-
-export const allPermissions: AdminPermission[] = [
-  'dashboard',
-  'users',
-  'revenue',
-  'coin_packages',
-  'broadcast',
-  'support',
-  'notifications',
-  'admins',
-  'settings',
-]
-
 export const roleLabels: Record<AdminRole, string> = {
   super_admin: 'Super Admin',
-  manager: 'Manager',
-  support: 'Support agent',
-  custom: 'Custom',
+  admin: 'Admin',
 }
 
 export const rolePresets: Record<AdminRole, AdminPermission[]> = {
-  super_admin: allPermissions,
-  manager: [
-    'dashboard',
-    'users',
-    'revenue',
-    'coin_packages',
-    'broadcast',
-    'support',
-    'notifications',
-  ],
-  support: ['dashboard', 'users', 'support', 'notifications'],
-  custom: [],
+  super_admin: [],
+  admin: [],
 }
 
 export const initialAdmins: AdminAccount[] = [
@@ -91,7 +34,7 @@ export const initialAdmins: AdminAccount[] = [
     email: 'admin@spendlock.com',
     phone: '+1 (555) 123-4567',
     role: 'super_admin',
-    permissions: allPermissions,
+    permissions: [],
     status: 'active',
     createdAt: '2024-01-12',
     lastActiveAt: '2026-05-17 09:42',
@@ -101,8 +44,8 @@ export const initialAdmins: AdminAccount[] = [
     name: 'Renata Salinas',
     email: 'renata@spendlock.com',
     phone: '+1 (212) 555-0190',
-    role: 'manager',
-    permissions: rolePresets.manager,
+    role: 'admin',
+    permissions: [],
     status: 'active',
     createdAt: '2025-03-04',
     lastActiveAt: '2026-05-16 18:20',
@@ -111,8 +54,8 @@ export const initialAdmins: AdminAccount[] = [
     id: 'ad_003',
     name: 'Diego Pereira',
     email: 'diego@spendlock.com',
-    role: 'support',
-    permissions: rolePresets.support,
+    role: 'admin',
+    permissions: [],
     status: 'active',
     createdAt: '2025-08-19',
     lastActiveAt: '2026-05-15 14:05',
@@ -121,10 +64,20 @@ export const initialAdmins: AdminAccount[] = [
     id: 'ad_004',
     name: 'Lucía Méndez',
     email: 'lucia.m@spendlock.com',
-    role: 'custom',
-    permissions: ['dashboard', 'revenue', 'coin_packages'],
+    role: 'admin',
+    permissions: [],
     status: 'suspended',
     createdAt: '2025-11-02',
     lastActiveAt: '2026-04-30 11:11',
   },
 ]
+
+export function arraysEqual<T>(a: T[], b: T[]) {
+  if (a.length !== b.length) return false
+  const set = new Set(a)
+  return b.every((x) => set.has(x))
+}
+
+export function matchRole(perms: AdminPermission[]): AdminRole {
+  return 'admin'
+}
