@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
-import { App, Input } from 'antd'
+import { useEffect, useRef, useState, type ChangeEvent } from "react";
+import { App, Input } from "antd";
 import {
   Camera,
   ChevronDown,
@@ -14,40 +14,54 @@ import {
   Trash2,
   User,
   type LucideIcon,
-} from 'lucide-react'
-import RichTextEditor from '../../components/editor/RichTextEditor'
+} from "lucide-react";
+import RichTextEditor from "../../components/editor/RichTextEditor";
 import {
   resetContent,
   setContent,
   useContent,
   type ContentKey,
-} from '../../components/settings/contentStore'
+} from "../../components/settings/contentStore";
+
+import FaqFormModal from "../../components/settings/FaqFormModal";
 import {
-  deleteFaq,
-  useFaqs,
-  type FaqItem,
-} from '../../components/settings/faqStore'
-import FaqFormModal from '../../components/settings/FaqFormModal'
+  useChangePasswordMutation,
+  useProfileQuery,
+  useUpdateProfileMutation,
+} from "../../redux/apiSlices/authSlice";
+import { imageUrl } from "../../redux/api/baseApi";
+import {
+  useGetAboutQuery,
+  useGetPrivacyPolicyQuery,
+  useGetTermsOfServicesQuery,
+  usePostAboutMutation,
+  usePostPrivacyPolicyMutation,
+  usePostTermsOfServicesMutation,
+} from "../../redux/apiSlices/settingsSlice";
+import {
+  useDeleteFaqMutation,
+  useGetFaqsQuery,
+} from "../../redux/apiSlices/faqSlice";
 
 type SectionKey =
-  | 'profile'
-  | 'password'
-  | 'faq'
-  | 'about'
-  | 'privacy'
-  | 'terms'
+  | "profile"
+  | "password"
+  | "faq"
+  | "about"
+  | "privacy"
+  | "terms";
 
 const navItems: { key: SectionKey; label: string; icon: LucideIcon }[] = [
-  { key: 'profile', label: 'Profile', icon: User },
-  { key: 'password', label: 'Change Password', icon: Lock },
-  { key: 'faq', label: 'FAQ', icon: HelpCircle },
-  { key: 'about', label: 'About Us', icon: Info },
-  { key: 'privacy', label: 'Privacy Policy', icon: Shield },
-  { key: 'terms', label: 'Terms of Service', icon: FileText },
-]
+  { key: "profile", label: "Profile", icon: User },
+  { key: "password", label: "Change Password", icon: Lock },
+  { key: "faq", label: "FAQ", icon: HelpCircle },
+  { key: "about", label: "About Us", icon: Info },
+  { key: "privacy", label: "Privacy Policy", icon: Shield },
+  { key: "terms", label: "Terms of Service", icon: FileText },
+];
 
 export default function Settings() {
-  const [section, setSection] = useState<SectionKey>('profile')
+  const [section, setSection] = useState<SectionKey>("profile");
 
   return (
     <div className="flex flex-col gap-6 py-6">
@@ -62,7 +76,7 @@ export default function Settings() {
         <aside className="rounded-2xl border border-surface-border bg-surface-card p-3">
           <nav className="flex flex-col gap-1">
             {navItems.map(({ key, label, icon: Icon }) => {
-              const active = key === section
+              const active = key === section;
               return (
                 <button
                   key={key}
@@ -70,99 +84,120 @@ export default function Settings() {
                   onClick={() => setSection(key)}
                   className={`flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors ${
                     active
-                      ? 'bg-brand/10 text-brand font-medium'
-                      : 'text-gray-700 hover:bg-surface-elevated hover:text-gray-900'
+                      ? "bg-brand/10 text-brand font-medium"
+                      : "text-gray-700 hover:bg-surface-elevated hover:text-gray-900"
                   }`}
                 >
                   <Icon size={16} />
                   {label}
                 </button>
-              )
+              );
             })}
           </nav>
         </aside>
 
         <section className="rounded-2xl border border-surface-border bg-surface-card">
-          {section === 'profile' && <ProfileSection />}
-          {section === 'password' && <PasswordSection />}
-          {section === 'faq' && <FaqSection />}
-          {section === 'about' && (
-            <ContentEditorSection
-              contentKey="about"
-              title="About Us"
-              description="Edit the public About Us page content"
-            />
-          )}
-          {section === 'privacy' && (
-            <ContentEditorSection
-              contentKey="privacy"
-              title="Privacy Policy"
-              description="Edit the public Privacy Policy content"
-            />
-          )}
-          {section === 'terms' && (
-            <ContentEditorSection
-              contentKey="terms"
-              title="Terms of Service"
-              description="Edit the public Terms of Service content"
-            />
-          )}
+          {section === "profile" && <ProfileSection />}
+          {section === "password" && <PasswordSection />}
+          {section === "faq" && <FaqSection />}
+          {section === "about" && <AboutSection />}
+          {section === "privacy" && <PrivacySection />}
+          {section === "terms" && <TermsSection />}
         </section>
       </div>
     </div>
-  )
+  );
 }
 
 function SectionHeader({
   title,
   description,
 }: {
-  title: string
-  description: string
+  title: string;
+  description: string;
 }) {
   return (
     <div className="border-b border-surface-border p-6">
       <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
       <p className="mt-1 text-sm text-gray-500">{description}</p>
     </div>
-  )
+  );
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return (
-    <label className="block text-sm font-medium text-gray-900">{children}</label>
-  )
+    <label className="block text-sm font-medium text-gray-900">
+      {children}
+    </label>
+  );
 }
 
 function ProfileSection() {
-  const { message } = App.useApp()
-  const fileRef = useRef<HTMLInputElement>(null)
-  const [avatar, setAvatar] = useState<string | null>(null)
-  const [firstName, setFirstName] = useState('Super')
-  const [lastName, setLastName] = useState('Admin')
-  const [email, setEmail] = useState('admin@spendlock.com')
-  const [phone, setPhone] = useState('+1 (555) 123-4567')
+  const { message } = App.useApp();
+
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const { data: profileData, isLoading } = useProfileQuery({});
+  console.log(profileData);
+
+  const [updateProfile, { isLoading: updating }] = useUpdateProfileMutation();
+
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [avatar, setAvatar] = useState<string>("");
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+
+  useEffect(() => {
+    if (profileData) {
+      const user = profileData;
+
+      setName(user.name || "");
+      setEmail(user.email || "");
+      setPhone(user.mobile || "");
+      setAvatar(user.image || "");
+    }
+  }, [profileData]);
 
   const onAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => {
-      setAvatar(reader.result as string)
-    }
-    reader.readAsDataURL(file)
-  }
+    const file = e.target.files?.[0];
 
-  const save = () => {
-    if (!firstName.trim() || !lastName.trim()) {
-      message.warning('Name is required.')
-      return
+    if (!file) return;
+
+    setImageFile(file);
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      setAvatar(reader.result as string);
+    };
+
+    reader.readAsDataURL(file);
+  };
+
+  const save = async () => {
+    try {
+      const formData = new FormData();
+
+      formData.append("name", name);
+      formData.append("email", email);
+      formData.append("mobile", phone);
+
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+
+      const res = await updateProfile(formData).unwrap();
+
+      message.success(res.message || "Profile updated");
+    } catch (error: any) {
+      message.error(error?.data?.message || "Failed to update profile");
     }
-    if (!email.trim()) {
-      message.warning('Email is required.')
-      return
-    }
-    message.success('Profile updated.')
+  };
+
+  if (isLoading) {
+    return <div className="p-6">Loading...</div>;
   }
 
   return (
@@ -175,25 +210,26 @@ function ProfileSection() {
       <div className="p-6">
         <div className="flex items-center gap-5">
           <div className="relative">
-            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-surface-elevated text-xl font-semibold text-gray-700">
+            <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-surface-elevated">
               {avatar ? (
                 <img
-                  src={avatar}
+                  src={avatar.startsWith("http") ? avatar : imageUrl + avatar}
                   alt="Profile"
                   className="h-full w-full object-cover"
                 />
               ) : (
-                `${firstName.charAt(0)}${lastName.charAt(0)}`
+                <User />
               )}
             </div>
+
             <button
               type="button"
               onClick={() => fileRef.current?.click()}
-              aria-label="Upload new photo"
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-brand text-white shadow-sm hover:bg-brand-hover"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-brand text-white"
             >
               <Camera size={14} />
             </button>
+
             <input
               ref={fileRef}
               type="file"
@@ -202,48 +238,31 @@ function ProfileSection() {
               className="hidden"
             />
           </div>
-          <div>
-            <div className="text-base font-semibold text-gray-900">
-              {firstName} {lastName}
-            </div>
-            <div className="text-sm text-gray-700">Global Access</div>
-            <p className="mt-1 text-xs text-gray-500">
-              Click the camera icon to upload a new photo
-            </p>
-          </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-5 md:grid-cols-2">
+        <div className="mt-8 grid grid-cols-1 gap-5">
           <div>
-            <FieldLabel>First Name</FieldLabel>
+            <FieldLabel>Name</FieldLabel>
             <Input
               className="mt-2"
               size="large"
-              value={firstName}
-              onChange={(e) => setFirstName(e.target.value)}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
             />
           </div>
+
           <div>
-            <FieldLabel>Last Name</FieldLabel>
+            <FieldLabel>Email</FieldLabel>
             <Input
               className="mt-2"
               size="large"
-              value={lastName}
-              onChange={(e) => setLastName(e.target.value)}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <FieldLabel>Email Address</FieldLabel>
-            <Input
-              className="mt-2"
-              size="large"
-              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
-          <div className="md:col-span-2">
-            <FieldLabel>Phone Number</FieldLabel>
+
+          <div>
+            <FieldLabel>Phone</FieldLabel>
             <Input
               className="mt-2"
               size="large"
@@ -251,53 +270,63 @@ function ProfileSection() {
               onChange={(e) => setPhone(e.target.value)}
             />
           </div>
-          <div className="md:col-span-2">
-            <FieldLabel>Role</FieldLabel>
-            <div className="mt-2 flex h-12 items-center rounded-md bg-surface-elevated px-3 text-sm text-gray-800">
-              <span className="font-medium">Global Access</span>
-              <span className="ml-2 text-xs text-gray-400">(Read-only)</span>
-            </div>
-          </div>
         </div>
       </div>
 
       <div className="flex justify-end border-t border-surface-border p-5">
         <button
           type="button"
+          disabled={updating}
           onClick={save}
-          className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
+          className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-sm font-semibold text-white"
         >
-          Save Changes
+          {updating ? "Updating..." : "Save Changes"}
         </button>
       </div>
     </>
-  )
+  );
 }
 
 function PasswordSection() {
-  const { message } = App.useApp()
-  const [current, setCurrent] = useState('')
-  const [next, setNext] = useState('')
-  const [confirm, setConfirm] = useState('')
+  const { message } = App.useApp();
+  const [current, setCurrent] = useState("");
+  const [next, setNext] = useState("");
+  const [confirm, setConfirm] = useState("");
 
-  const save = () => {
+  const [changePassword, { isLoading }] = useChangePasswordMutation();
+
+  const save = async () => {
     if (!current || !next || !confirm) {
-      message.warning('All fields are required.')
-      return
+      message.warning("All fields are required.");
+      return;
     }
+
     if (next.length < 8) {
-      message.warning('New password must be at least 8 characters.')
-      return
+      message.warning("New password must be at least 8 characters.");
+      return;
     }
+
     if (next !== confirm) {
-      message.warning('New passwords do not match.')
-      return
+      message.warning("Passwords do not match.");
+      return;
     }
-    setCurrent('')
-    setNext('')
-    setConfirm('')
-    message.success('Password updated.')
-  }
+
+    try {
+      const res = await changePassword({
+        currentPassword: current,
+        newPassword: next,
+        confirmPassword: confirm,
+      }).unwrap();
+
+      message.success(res?.message || "Password updated successfully");
+
+      setCurrent("");
+      setNext("");
+      setConfirm("");
+    } catch (error: any) {
+      message.error(error?.data?.message || "Failed to update password");
+    }
+  };
 
   return (
     <>
@@ -341,45 +370,58 @@ function PasswordSection() {
         <button
           type="button"
           onClick={save}
-          className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-sm font-semibold text-white transition-colors hover:bg-brand-hover"
+          disabled={isLoading}
+          className="inline-flex h-11 items-center rounded-md bg-brand px-6 text-sm font-semibold text-white transition-colors hover:bg-brand-hover disabled:opacity-50"
         >
-          Update Password
+          {isLoading ? "Updating..." : "Update Password"}
         </button>
       </div>
     </>
-  )
+  );
 }
 
 function FaqSection() {
-  const faqs = useFaqs()
-  const { modal, message } = App.useApp()
-  const [openId, setOpenId] = useState<string | null>(faqs[0]?.id ?? null)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [editing, setEditing] = useState<FaqItem | null>(null)
+  const { data, isLoading } = useGetFaqsQuery({});
+  const [deleteFaqApi] = useDeleteFaqMutation();
+
+  const faqs = data?.data ?? [];
+
+  const { modal, message } = App.useApp();
+
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editing, setEditing] = useState<any>(null);
 
   const openAdd = () => {
-    setEditing(null)
-    setModalOpen(true)
-  }
+    setEditing(null);
+    setModalOpen(true);
+  };
 
-  const openEdit = (f: FaqItem) => {
-    setEditing(f)
-    setModalOpen(true)
-  }
+  const openEdit = (f: any) => {
+    setEditing(f);
+    setModalOpen(true);
+  };
 
-  const remove = (f: FaqItem) => {
+  const remove = (f: any) => {
     modal.confirm({
-      title: 'Delete this FAQ?',
+      title: "Delete this FAQ?",
       content: f.question,
-      okText: 'Delete',
+      okText: "Delete",
       okButtonProps: { danger: true },
-      onOk: () => {
-        deleteFaq(f.id)
-        message.success('FAQ deleted.')
+      onOk: async () => {
+        try {
+          await deleteFaqApi(f._id).unwrap();
+          message.success("FAQ deleted.");
+        } catch (error: any) {
+          message.error(error?.data?.message || "Failed to delete FAQ");
+        }
       },
-    })
-  }
+    });
+  };
 
+  if (isLoading) {
+    return <div className="p-6">Loading FAQs...</div>;
+  }
   return (
     <>
       <div className="flex items-start justify-between gap-4 border-b border-surface-border p-6">
@@ -410,13 +452,13 @@ function FaqSection() {
       ) : (
         <ul className="divide-y divide-surface-border">
           {faqs.map((f) => {
-            const isOpen = openId === f.id
+            const isOpen = openId === f._id;
             return (
-              <li key={f.id}>
+              <li key={f._id}>
                 <div className="flex items-center gap-2 px-6 py-3 hover:bg-surface-elevated">
                   <button
                     type="button"
-                    onClick={() => setOpenId(isOpen ? null : f.id)}
+                    onClick={() => setOpenId(isOpen ? null : f._id)}
                     className="flex flex-1 items-center justify-between gap-3 text-left"
                   >
                     <span className="text-sm font-medium text-gray-900">
@@ -425,7 +467,7 @@ function FaqSection() {
                     <ChevronDown
                       size={16}
                       className={`shrink-0 text-gray-500 transition-transform ${
-                        isOpen ? 'rotate-180' : ''
+                        isOpen ? "rotate-180" : ""
                       }`}
                     />
                   </button>
@@ -452,7 +494,7 @@ function FaqSection() {
                   </div>
                 )}
               </li>
-            )
+            );
           })}
         </ul>
       )}
@@ -463,47 +505,195 @@ function FaqSection() {
         onClose={() => setModalOpen(false)}
       />
     </>
-  )
+  );
 }
+function AboutSection() {
+  const { message } = App.useApp();
 
+  const { data } = useGetAboutQuery({});
+  const [postAbout] = usePostAboutMutation();
+
+  const [content, setContent] = useState("");
+
+  useEffect(() => {
+    setContent(data?.data?.description || "");
+  }, [data]);
+
+  const save = async () => {
+    try {
+      await postAbout({
+        description: content,
+      }).unwrap();
+
+      message.success("About updated");
+    } catch (error: any) {
+      message.error(error?.data?.message);
+    }
+  };
+
+  return (
+    <>
+      <SectionHeader title="About Us" description="Edit About Us page" />
+
+      <div className="p-6">
+        <RichTextEditor value={content} onChange={setContent} />
+      </div>
+
+      <div className="flex justify-end border-t p-5">
+        <button
+          onClick={save}
+          className="bg-brand px-6 py-2 text-white rounded-md"
+        >
+          Save Changes
+        </button>
+      </div>
+    </>
+  );
+}
+function TermsSection() {
+  const { message } = App.useApp();
+
+  const { data, isLoading } = useGetTermsOfServicesQuery(undefined);
+
+  const [postTermsOfServices, { isLoading: saving }] =
+    usePostTermsOfServicesMutation();
+
+  const [content, setContent] = useState("");
+
+  useEffect(() => {
+    if (data?.data?.description) {
+      setContent(data.data.description);
+    }
+  }, [data]);
+
+  const handleSave = async () => {
+    try {
+      const res = await postTermsOfServices({
+        description: content,
+      }).unwrap();
+
+      message.success(res?.message || "Terms of Services updated");
+    } catch (error: any) {
+      message.error(error?.data?.message || "Failed to update Terms");
+    }
+  };
+
+  if (isLoading) return <div className="p-6">Loading...</div>;
+
+  return (
+    <>
+      <SectionHeader
+        title="Terms of Services"
+        description="Edit Terms of Services content"
+      />
+
+      <div className="p-6">
+        <RichTextEditor value={content} onChange={setContent} />
+      </div>
+
+      <div className="flex justify-end border-t p-5">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-brand px-6 py-2 text-white rounded-md"
+        >
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
+      </div>
+    </>
+  );
+}
+function PrivacySection() {
+  const { message } = App.useApp();
+
+  const { data, isLoading } = useGetPrivacyPolicyQuery(undefined);
+
+  const [postPrivacyPolicy, { isLoading: saving }] =
+    usePostPrivacyPolicyMutation();
+
+  const [content, setContent] = useState("");
+
+  useEffect(() => {
+    if (data?.data?.description) {
+      setContent(data.data.description);
+    }
+  }, [data]);
+
+  const handleSave = async () => {
+    try {
+      const res = await postPrivacyPolicy({
+        description: content,
+      }).unwrap();
+
+      message.success(res?.message || "Privacy Policy updated");
+    } catch (error: any) {
+      message.error(error?.data?.message || "Failed to update Privacy Policy");
+    }
+  };
+
+  if (isLoading) return <div className="p-6">Loading...</div>;
+
+  return (
+    <>
+      <SectionHeader
+        title="Privacy Policy"
+        description="Edit Privacy Policy content"
+      />
+
+      <div className="p-6">
+        <RichTextEditor value={content} onChange={setContent} />
+      </div>
+
+      <div className="flex justify-end border-t p-5">
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          className="bg-brand px-6 py-2 text-white rounded-md"
+        >
+          {saving ? "Saving..." : "Save Changes"}
+        </button>
+      </div>
+    </>
+  );
+}
 function ContentEditorSection({
   contentKey,
   title,
   description,
 }: {
-  contentKey: ContentKey
-  title: string
-  description: string
+  contentKey: ContentKey;
+  title: string;
+  description: string;
 }) {
-  const stored = useContent()
-  const { modal, message } = App.useApp()
-  const [draft, setDraft] = useState(stored[contentKey])
-  const [savedAt, setSavedAt] = useState<string | null>(null)
+  const stored = useContent();
+  const { modal, message } = App.useApp();
+  const [draft, setDraft] = useState(stored[contentKey]);
+  const [savedAt, setSavedAt] = useState<string | null>(null);
 
   useEffect(() => {
-    setDraft(stored[contentKey])
-  }, [contentKey, stored])
+    setDraft(stored[contentKey]);
+  }, [contentKey, stored]);
 
-  const dirty = draft !== stored[contentKey]
+  const dirty = draft !== stored[contentKey];
 
   const save = () => {
-    setContent(contentKey, draft)
-    setSavedAt(new Date().toLocaleString())
-    message.success(`${title} updated.`)
-  }
+    setContent(contentKey, draft);
+    setSavedAt(new Date().toLocaleString());
+    message.success(`${title} updated.`);
+  };
 
   const onReset = () => {
     modal.confirm({
       title: `Reset ${title}?`,
-      content: 'The content will be restored to its default.',
-      okText: 'Reset',
+      content: "The content will be restored to its default.",
+      okText: "Reset",
       okButtonProps: { danger: true },
       onOk: () => {
-        resetContent(contentKey)
-        message.success(`${title} reset to default.`)
+        resetContent(contentKey);
+        message.success(`${title} reset to default.`);
       },
-    })
-  }
+    });
+  };
 
   return (
     <>
@@ -537,5 +727,5 @@ function ContentEditorSection({
         </button>
       </div>
     </>
-  )
+  );
 }
